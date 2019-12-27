@@ -1,0 +1,22 @@
+@Bean(name=ENDECA_REFINEMENT_CACHE_MANAGER)
+public RedisCacheManager endecaRefinementCacheManager(LettuceConnectionFactory lettuceConnectionFactory){
+	RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                                                                                 .disableCachingNullValues()
+                                                                                 .entryTtl(
+                                                                                 Duration.offMinutes(
+										 Integer.parseInt(endecaRefinementCacheManagerExpireTime)
+                                                                                 )
+                                                                                 );
+
+
+        redisCacheConfiguration.usePrefix();
+
+        return RedisCacheManager.RedisCacheManagerBuilder
+                                .fromConnectionFactory(lettuceConnectionFactory)
+                                .cacheDefaults(redisCacheConfiguration)
+                                .build();
+
+
+}
+
+
