@@ -1,0 +1,63 @@
+package com.rci.apis.points.inventory.repository;
+
+import java.sql.Array;
+import java.sql.Types;
+import java.util.Map;
+
+import org.apache.commons.collections.MapUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
+import org.springframework.stereotype.Repository;
+
+import oracle.jdbc.OracleTypes;
+
+@Repository
+public class StaleInventoryRepository{
+
+	private static final String OUT_PUID_TBL = "out_puid_tbl";
+	private static final String IN_PRD_TYP_ID = "in_prd_typ_id";
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	public Array getStaleUids(Integer productType){
+		
+		SimpleJdbcCall call = new SimpleJdbcCall(jdbcTemplate)
+						.withSchemaName("ODSCINVCDC_OWNER")
+						.withCalalogName("PKG_SOA_EXCLSN_FILTER")
+						.withProcedureName("PRC_ENDECA_EXCLSN_FLTR")
+						.declareParameter(new SqlParameter(IN_PRD_TYP_ID, Types.NUMERIC),
+                                                                  new SqlOutParameter(OUT_PUID_TBL, OracleTypes.ARRAY, "V_VARCHAR_ARR_TYP));
+
+		Map<String, Object> resultMap = call.execute(new MapSqlParameterSource(IN_PRD_TYP_ID, productType));
+
+		if(MapUtils.isNotEmpty(resultMap)){
+			return (java.sql.Array)resultMap.get(OUT_PUID_TBL);
+		}else{
+			return null;
+		}
+	}
+
+	public Array getStaleInventoryAvalibleUnitsUids(Integer productTypeId, String resortCode){
+		SimpleJdbcCall call = new SimpleJdbcCall(jdbcTemplate)
+						.withSchemaName("ODSCINVCDC_OWNER")
+						.withCatalogName("PKG_SOA_EXCLSN_FILTER)
+						.withProcedureName("PRC_UNITSPG_EXCLSN_FLTR")
+						.declareParameter(new SqlParameter("in_res_code", Types.VARCHAR),
+                                                                  new SqlParameter("IN_PRD_TYP_ID", Types.NUMERIC),
+								  new SqlOutParameter(OUT_PUID_TBL, OracleTypes.ARRAY, "V_VARCHAR_ARR_TYP"));
+
+		SqlParameterSource inParam = new MapSqlParameterSource().addValue("in_res_code",resortCode)
+
+		Map<String, Object> resultMap = call.execute(inParam);
+
+		if(MapUtils.inNotEmpty(resultMap)){
+			return (java.sql.Array) resultMap.get(OUT_PUID_TBL);
+		}else{
+			return null;
+		}
+}
